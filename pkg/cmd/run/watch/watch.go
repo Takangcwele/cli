@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"runtime"
 	"time"
 
 	"github.com/cli/cli/api"
@@ -107,8 +108,16 @@ func watchRun(opts *WatchOptions) error {
 		prNumber = fmt.Sprintf(" #%d", number)
 	}
 
+	// TODO test on macos
+
 	// clear entire screen
-	fmt.Fprint(opts.IO.Out, "\033[2J")
+	if runtime.GOOS == "windows" {
+		opts.IO.EnableVirtualTerminalProcessing()
+		// TODO experiment with using opts.IO.Out
+		fmt.Printf("\x1b[2J")
+	} else {
+		fmt.Fprint(opts.IO.Out, "\033[2J")
+	}
 
 	for run.Status != shared.Completed {
 		run, err = renderRun(*opts, client, repo, run, prNumber)
@@ -155,10 +164,20 @@ func renderRun(opts WatchOptions, client *api.Client, repo ghrepo.Interface, run
 		return run, fmt.Errorf("failed to get annotations: %w", annotationErr)
 	}
 
-	// Move cursor to 0,0
-	fmt.Fprint(opts.IO.Out, "\033[0;0H")
-	// Clear from cursor to bottom of screen
-	fmt.Fprint(opts.IO.Out, "\033[J")
+	if runtime.GOOS == "windows" {
+		// Just clear whole screen; I wasn't able to get the nicer cursor movement thing working
+		// TODO experiment with using opts.IO.Out
+		fmt.Printf("\x1b[2J")
+		// TODO experiement one more time with:
+		//fmt.Fprint(opts.IO.Out, "\x1b[0;0H")
+		// Clear from cursor to bottom of screen
+		//fmt.Fprint(opts.IO.Out, "\x1b[J")
+	} else {
+		// Move cursor to 0,0
+		fmt.Fprint(opts.IO.Out, "\033[0;0H")
+		// Clear from cursor to bottom of screen
+		fmt.Fprint(opts.IO.Out, "\033[J")
+	}
 
 	fmt.Fprintln(out, cs.Boldf("Refreshing run status every %d seconds. Press Ctrl+C to quit.", opts.Interval))
 	fmt.Fprintln(out)

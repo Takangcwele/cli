@@ -161,11 +161,14 @@ func runRun(opts *RunOptions) error {
 		return err
 	}
 
+	// TODO when i pick up:
+	// - experiment with the concern below and make decisions as needed
+	// - start on tests
+
 	// TODO decide on behavior if no args passed but inputs are all optional. In
 	// other words, how to force non-interactive if you do not want to use
 	// non-default inputs?
 
-	// TODO  once end-to-end is working, circle back and see if running a local workflow remotely is feasible by doing git stuff automagically in a throwaway branch.
 	ref := opts.Ref
 
 	if ref == "" {

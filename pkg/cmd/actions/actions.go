@@ -19,12 +19,14 @@ func NewCmdActions(f *cmdutil.Factory) *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:    "actions",
-		Short:  "Learn about working with GitHub actions",
-		Args:   cobra.ExactArgs(0),
-		Hidden: true,
+		Use:   "actions",
+		Short: "Learn about working with GitHub actions",
+		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			actionsRun(opts)
+		},
+		Annotations: map[string]string{
+			"IsActions": "true",
 		},
 	}
 

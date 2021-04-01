@@ -94,12 +94,15 @@ func NewCmdRun(f *cmdutil.Factory, runF func(*RunOptions) error) *cobra.Command 
 				opts.Selector = args[0]
 				opts.InputArgs = args[1:]
 			} else if !opts.IO.CanPrompt() {
-				return &cmdutil.FlagError{Err: errors.New("workflow ID or name required when not running interactively")}
+				return &cmdutil.FlagError{Err: errors.New("workflow ID, name, or filename required when not running interactively")}
 			} else {
 				opts.Prompt = true
 			}
 
 			if !opts.IO.IsStdinTTY() {
+				if opts.JSON != "" {
+					return errors.New("JSON can only be passed on one of STDIN or --json at a time")
+				}
 				jsonIn, err := ioutil.ReadAll(opts.IO.In)
 				if err != nil {
 					return errors.New("failed to read from STDIN")

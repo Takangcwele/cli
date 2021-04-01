@@ -18,16 +18,69 @@ func TestNewCmdRun(t *testing.T) {
 		tty      bool
 		wants    RunOptions
 		wantsErr bool
+		errMsg   string
 		stdin    string
 	}{
-		// TODO blank nontty
-		// TODO blank tty
-		// TODO workflow arg
-		// TODO ref
-		// TODO json as --json
-		// TODO extra args
-		// TODO both json on stdin and extra args
-		// TODO both json arg and extra args
+		{
+			name:     "blank nontty",
+			wantsErr: true,
+			errMsg:   "workflow ID, name, or filename required when not running interactively",
+		},
+		{
+			name: "blank tty",
+			tty:  true,
+			wants: RunOptions{
+				Prompt: true,
+			},
+		},
+		{
+			name: "ref flag",
+			tty:  true,
+			cli:  "--ref 12345abc",
+			wants: RunOptions{
+				Prompt: true,
+				Ref:    "12345abc",
+			},
+		},
+		{
+			name: "extra args",
+			tty:  true,
+			cli:  `workflow.yml -- --cool=nah --foo bar`,
+			wants: RunOptions{
+				InputArgs: []string{"--cool=nah", "--foo", "bar"},
+				Selector:  "workflow.yml",
+			},
+		},
+		{
+			name:     "both json on STDIN and json arg",
+			cli:      `workflow.yml --json '{"cool":"yeah"}'`,
+			stdin:    `{"cool":"yeah"}`,
+			wantsErr: true,
+			errMsg:   "JSON can only be passed on one of STDIN or --json at a time",
+		},
+		{
+			name:     "both json on STDIN and extra args",
+			cli:      `workflow.yml -- --cool=nah`,
+			stdin:    `{"cool":"yeah"}`,
+			errMsg:   "only one of JSON or input arguments can be passed at a time",
+			wantsErr: true,
+		},
+		{
+			name:     "both json arg and extra args",
+			tty:      true,
+			cli:      `workflow.yml --json '{"cool":"yeah"}' -- --cool=nah`,
+			errMsg:   "only one of JSON or input arguments can be passed at a time",
+			wantsErr: true,
+		},
+		{
+			name: "json via argument",
+			cli:  `workflow.yml --json '{"cool":"yeah"}'`,
+			tty:  true,
+			wants: RunOptions{
+				JSON:     `{"cool":"yeah"}`,
+				Selector: "workflow.yml",
+			},
+		},
 		{
 			name:  "json on STDIN",
 			cli:   "workflow.yml",
@@ -47,8 +100,8 @@ func TestNewCmdRun(t *testing.T) {
 				io.SetStdinTTY(tt.tty)
 			} else {
 				stdin.WriteString(tt.stdin)
-				io.SetStdoutTTY(tt.tty)
 			}
+			io.SetStdoutTTY(tt.tty)
 
 			f := &cmdutil.Factory{
 				IOStreams: io,
@@ -70,6 +123,9 @@ func TestNewCmdRun(t *testing.T) {
 			_, err = cmd.ExecuteC()
 			if tt.wantsErr {
 				assert.Error(t, err)
+				if tt.errMsg != "" {
+					assert.Equal(t, tt.errMsg, err.Error())
+				}
 				return
 			}
 

@@ -31,9 +31,9 @@ type RunOptions struct {
 
 	Selector string
 	Ref      string
+	JSON     string
 
 	InputArgs []string
-	JSON      string
 
 	Prompt bool
 }
@@ -161,14 +161,6 @@ func runRun(opts *RunOptions) error {
 		return err
 	}
 
-	// TODO when i pick up:
-	// - experiment with the concern below and make decisions as needed
-	// - start on tests
-
-	// TODO decide on behavior if no args passed but inputs are all optional. In
-	// other words, how to force non-interactive if you do not want to use
-	// non-default inputs?
-
 	ref := opts.Ref
 
 	if ref == "" {
@@ -230,7 +222,6 @@ func runRun(opts *RunOptions) error {
 				return fmt.Errorf("could not parse input args: %w", err)
 			}
 			for inputName := range inputs {
-				// TODO error handling
 				providedValue, _ := fs.GetString(inputName)
 				providedInputs[inputName] = providedValue
 			}
